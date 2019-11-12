@@ -17,19 +17,19 @@ class TetrahedralMeshtests extends ScalismoTestSuite {
   implicit def intToPointId(i: Int): PointId = PointId(i)
 
 
-//  val path = getClass.getResource("/tetraMesh.vtk").getPath
-//  val tetraMesh = TetraMeshIO.readTetrahedralMesh(new File(path)).get
-//
-//  it("finds the right closest points for all the points that define the tetrahedral mesh") {
-//
-//    for ((pt, id) <- tetraMesh.pointSet.points.zipWithIndex) {
-//      val ptWithID = tetraMesh.pointSet.findClosestPoint(pt)
-//      val closestPt = ptWithID.point
-//      val closestId = ptWithID.id
-//      assert(closestPt === pt)
-//      assert(closestId.id === id)
-//    }
-//  }
+  val path = getClass.getResource("/tetraMesh.vtk").getPath
+  val tetraMesh = TetraMeshIO.readTetrahedralMesh(new File(path)).get
+
+  it("finds the right closest points for all the points that define the tetrahedral mesh") {
+
+    for ((pt, id) <- tetraMesh.pointSet.points.zipWithIndex) {
+      val ptWithID = tetraMesh.pointSet.findClosestPoint(pt)
+      val closestPt = ptWithID.point
+      val closestId = ptWithID.id
+      assert(closestPt === pt)
+      assert(closestId.id === id)
+    }
+  }
   it("finds the right closest point for a point that is not defined on the tetrahedral mesh") {
     val pts = IndexedSeq(Point(0.0, 0.0, 0.0), Point(1.0, 1.0, 1.0), Point(1.0, 1.0, 5.0), Point(1.0, 1.0, -5.0))
     val cells = IndexedSeq(TetrahedralCell(0, 1, 2, 3))
