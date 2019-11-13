@@ -350,29 +350,14 @@ class TetrahedralMesh3DSpatialIndex(private val bs: BoundingSphere,
     val p = point.toVector
 
     // last tetrahedron might be a good candidate
-    def closestpointTotetrahedron(t:Tetrahedron):ClosestPointMeta={
-      val resultt = BSDistance.toTriangle(point.toVector, t.triangles(0))
-      var d=resultt.distance2
-      var pt=resultt.pt
-      var pttype=resultt.ptType
-      var bc=resultt.bc
-      var idex=resultt.idx
-      for (i <- 0 to 3) {
-        val resulti = BSDistance.toTriangle(point.toVector, tetrahedrons(lastIdx.get().idx).triangles(i))
-        if (resulti.distance2 < resultt.distance2) {
-           d=resulti.distance2
-           pt=EuclideanVector3D(resulti.pt(0),resulti.pt(1),resulti.pt(2))
-           pttype=resulti.ptType
-           bc=(resulti.bc._1,resulti.bc._2)
-           idex=(resulti.idx._1,resulti.idx._2)
-        }
+    // last tetrahedron might be a good candidate
+    var result = BSDistance.toTriangle(point.toVector, tetrahedrons.apply(lastIdx.get().idx).triangles(0))
+    for (i <- 0 to 3) {
+      val resulti = BSDistance.toTriangle(point.toVector, tetrahedrons.apply(lastIdx.get().idx).triangles(i))
+      if (resulti.distance2 <= result.distance2) {
+        result = resulti
       }
-
-     new ClosestPointMeta(d,pt,pttype,bc,idex)
     }
-
-    val result=closestpointTotetrahedron(tetrahedrons(lastIdx.get().idx))
-
 
     updateCP(res.get(), result)
 
