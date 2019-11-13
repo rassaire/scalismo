@@ -17,10 +17,10 @@ package scalismo.mesh.boundingSpheres
 
 import breeze.numerics.pow
 import scalismo.common.PointId
-import scalismo.geometry.{ EuclideanVector, Point, _3D }
+import scalismo.geometry._
 import scalismo.mesh.boundingSpheres.BSDistance._
-import scalismo.mesh.{ BarycentricCoordinates, TriangleId, TriangleMesh3D }
-import scalismo.tetramesh.{ TetrahedralMesh3D, TetrahedronId }
+import scalismo.mesh.{BarycentricCoordinates, TriangleId, TriangleMesh3D}
+import scalismo.tetramesh.{TetrahedralMesh3D, TetrahedronId}
 
 /**
  * SurfaceDistance trait with the basic queries defined.
@@ -350,13 +350,30 @@ class TetrahedralMesh3DSpatialIndex(private val bs: BoundingSphere,
     val p = point.toVector
 
     // last tetrahedron might be a good candidate
-    var result = BSDistance.toTriangle(point.toVector, tetrahedrons.apply(lastIdx.get().idx).triangles(0))
-    for (i <- 0 to 3) {
-      val resulti = BSDistance.toTriangle(point.toVector, tetrahedrons(lastIdx.get().idx).triangles(i))
-      if (resulti.distance2 <= result.distance2) {
-        result = resulti
+    def closestpointTotetrahedron(t:Tetrahedron):ClosestPointMeta={
+      val resultt = BSDistance.toTriangle(point.toVector, t.triangles(0))
+      var d=resultt.distance2
+      var pt=resultt.pt
+      var pttype=resultt.ptType
+      var bc=resultt.bc
+      var idex=resultt.idx
+      for (i <- 0 to 3) {
+        val resulti = BSDistance.toTriangle(point.toVector, tetrahedrons(lastIdx.get().idx).triangles(i))
+        if (resulti.distance2 < resultt.distance2) {
+           d=resulti.distance2
+           pt=EuclideanVector3D(resulti.pt(0),resulti.pt(1),resulti.pt(2))
+           pttype=resulti.ptType
+           bc=(resulti.bc._1,resulti.bc._2)
+           idex=(resulti.idx._1,resulti.idx._2)
+        }
       }
+
+     new ClosestPointMeta(d,pt,pttype,bc,idex)
     }
+
+    val result=closestpointTotetrahedron(tetrahedrons(lastIdx.get().idx))
+
+
     updateCP(res.get(), result)
 
     // search for true candidate
@@ -388,7 +405,7 @@ class TetrahedralMesh3DSpatialIndex(private val bs: BoundingSphere,
 
       for (i <- 0 to 3) {
         val resulti = BSDistance.toTriangle(point, tetrahedrons.apply(partition.idx).triangles(i))
-        if (resulti.distance2 <= res.distance2) {
+        if (resulti.distance2 < res.distance2) {
           res = resulti
         }
       }
