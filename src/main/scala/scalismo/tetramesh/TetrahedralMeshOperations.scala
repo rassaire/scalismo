@@ -1,8 +1,8 @@
 package scalismo.tetramesh
 
-import scalismo.common.{ PointId, RealSpace }
-import scalismo.geometry.{ EuclideanVector, Point, _3D }
-import scalismo.image.{ DifferentiableScalarImage, ScalarImage }
+import scalismo.common.{BoxDomain, PointId, RealSpace}
+import scalismo.geometry._
+import scalismo.image.{DifferentiableScalarImage, DiscreteImageDomain, DiscreteScalarImage, ScalarImage}
 import scalismo.mesh._
 import scalismo.mesh.boundingSpheres._
 
@@ -77,6 +77,23 @@ class TetrahedralMesh3DOperations(private val mesh: TetrahedralMesh[_3D]) {
     }
 
     DifferentiableScalarImage(RealSpace[_3D], (pt: Point[_3D]) => dist(pt), (pt: Point[_3D]) => grad(pt))
+  }
+
+
+  /**
+    * Returns a new discrete [[DiscreteScalarImage]] defined on 3-dimensional [[RealSpace]] which is the distance transform of the tetrahedral mesh
+    */
+  def toDiscretScalarDistanceImage: DiscreteScalarImage[_3D,Short] = {
+    val origin=Point3D(-10.0+mesh.pointSet.boundingBox.origin.x,-7.0+mesh.pointSet.boundingBox.origin.y,-7.0+mesh.pointSet.boundingBox.origin.z)//the origin of the domain
+    val oppositecorner=Point3D(mesh.pointSet.boundingBox.oppositeCorner(0), mesh.pointSet.boundingBox.oppositeCorner(1),mesh.pointSet.boundingBox.oppositeCorner(2))//provides maximum axis value of x, y,z
+    val boxdomain=BoxDomain(origin, oppositecorner)
+    val spacing=IntVector3D(10, 10, 10)
+
+    val newImageDomain = DiscreteImageDomain[_3D](boxdomain,spacing)
+
+    val seq:Seq[Short]=newImageDomain.points.toSeq.map{p=>Math.sqrt(shortestDistanceToSurfaceSquared(p)).toShort}
+
+     DiscreteScalarImage[_3D, Short](newImageDomain,seq)
   }
 
 }

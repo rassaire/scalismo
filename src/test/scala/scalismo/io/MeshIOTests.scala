@@ -16,15 +16,16 @@
 package scalismo.io
 
 import java.io.File
+import java.net.URLDecoder
 
 import scalismo.ScalismoTestSuite
-import scalismo.common.{ Scalar, ScalarArray }
+import scalismo.common.{Scalar, ScalarArray}
 import scalismo.geometry._3D
-import scalismo.mesh.{ ScalarMeshField, TriangleMesh }
+import scalismo.mesh.{ScalarMeshField, TriangleMesh}
 
 import scala.reflect.ClassTag
 import scala.reflect.runtime.universe.TypeTag
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 class MeshIOTests extends ScalismoTestSuite {
 
@@ -58,7 +59,7 @@ class MeshIOTests extends ScalismoTestSuite {
 
     it("yields the original polyline when reading  and writing a polyLine in 2D") {
       val path = getClass.getResource("/linemesh.vtk").getPath
-      val origMesh = MeshIO.readLineMesh2D(new File(path)).get
+      val origMesh = MeshIO.readLineMesh2D(new File(URLDecoder.decode(path))).get
 
       val tmpFile = File.createTempFile("mesh", ".vtk")
       val writeStatus = MeshIO.writeLineMesh(origMesh, tmpFile)
@@ -74,7 +75,7 @@ class MeshIOTests extends ScalismoTestSuite {
 
     it("yields the original mesh when reading and writing a shape only ply") {
       val path = getClass.getResource("/mean_shapeOnly.ply").getPath
-      val shape = MeshIO.readMesh(new File(path)).get
+      val shape = MeshIO.readMesh(new File(URLDecoder.decode(path))).get
       val tmpFile = File.createTempFile("mesh", ".ply")
       MeshIO.writeMesh(shape, tmpFile)
       val reRead = MeshIO.readMesh(tmpFile).get
@@ -85,7 +86,7 @@ class MeshIOTests extends ScalismoTestSuite {
 
     it("yields the original mesh when reading and writing a vertex color ply") {
       val path = getClass.getResource("/mean_vertexColor.ply").getPath
-      val shape = MeshIO.readVertexColorMesh3D(new File(path)).get
+      val shape = MeshIO.readVertexColorMesh3D(new File(URLDecoder.decode(path))).get
       val tmpFile = File.createTempFile("mesh", ".ply")
       MeshIO.writeVertexColorMesh3D(shape, tmpFile)
       val reRead = MeshIO.readVertexColorMesh3D(tmpFile).get
@@ -96,7 +97,7 @@ class MeshIOTests extends ScalismoTestSuite {
 
     it("correctly fails when reading a textured ascii ply") {
       val path = getClass.getResource("/mean_textured.ply").getPath
-      val shape = MeshIO.readMesh(new File(path))
+      val shape = MeshIO.readMesh(new File(URLDecoder.decode(path)))
       assert(shape.isFailure)
     }
 
@@ -106,7 +107,7 @@ class MeshIOTests extends ScalismoTestSuite {
 
     object Fixture {
       val path: String = getClass.getResource("/facemesh.stl").getPath
-      val mesh: TriangleMesh[_3D] = MeshIO.readMesh(new File(path)).get
+      val mesh: TriangleMesh[_3D] = MeshIO.readMesh(new File(URLDecoder.decode(path))).get
       val meshData: ScalarMeshField[Int] = ScalarMeshField(mesh, ScalarArray(mesh.pointSet.pointIds.map(_.id).toArray))
     }
 
@@ -153,5 +154,64 @@ class MeshIOTests extends ScalismoTestSuite {
     }
 
   }
+
+}
+
+
+class MeshIOTetrahedralMeshTests extends ScalismoTestSuite {
+
+  describe("MeshIO Tetrahedral mesh vtk") {
+
+    it("yields the original mesh when reading  and writing") {
+      val path = getClass.getResource("/tetramesh.vtk").getPath
+      val origMesh = MeshIO.readTetrahedralMesh(new File(URLDecoder.decode(path))).get
+
+      def testWriteRead(extension: String): Unit = {
+        val tmpFile = File.createTempFile("tetrahedralmeshvtk", ".vtk")
+        val writeStatus = TetraMeshIO.writeVTK(origMesh, tmpFile)
+        writeStatus.isSuccess should be(true)
+
+        val meshTry = MeshIO.readTetrahedralMesh(tmpFile)
+        meshTry.isSuccess should be(true)
+        meshTry.map { mesh =>
+          mesh should equal(origMesh)
+        }
+      }
+
+      testWriteRead(".vtk")
+
+    }
+  }
+
+  describe("MeshIO Tetrahedral mesh vtu") {
+    it("yields the original mesh when reading  and writing") {
+      val path = getClass.getResource("/tetramesh.vtu").getPath
+      val origMesh = MeshIO.readTetrahedralMesh(new File(URLDecoder.decode(path))).get
+
+      def testWriteRead(extension: String): Unit = {
+        val tmpFile = File.createTempFile("tetrahedralmeshvtu", ".vtu")
+        val writeStatus = TetraMeshIO.writeVTU(origMesh, tmpFile)
+        writeStatus.isSuccess should be(true)
+
+        val meshTry = MeshIO.readTetrahedralMesh(tmpFile)
+        meshTry.isSuccess should be(true)
+        meshTry.map { mesh =>
+          mesh should equal(origMesh)
+        }
+      }
+      testWriteRead(".vtu")
+
+    }
+
+
+    it("correctly fails when reading a inp file") {
+      val path = getClass.getResource("/unit-sphere-grid.inp").getPath
+      val shape = TetraMeshIO.readTetrahedralMesh(new File(URLDecoder.decode(path)))
+      assert(shape.isSuccess)
+    }
+
+
+  }
+
 
 }

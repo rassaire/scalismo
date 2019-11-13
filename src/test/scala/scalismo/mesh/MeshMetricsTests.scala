@@ -105,7 +105,7 @@ class tetrahedralMeshMetricsTests extends ScalismoTestSuite {
   implicit val rng = Random(42L)
 
   val path = getClass.getResource("/tetramesh.vtk").getPath
-  val mesh = TetraMeshIO.readTetrahedralMesh(new File(URLDecoder.decode(path))).get
+  val mesh = MeshIO.readTetrahedralMesh(new File(URLDecoder.decode(path))).get
   val translationLength = 1.0
   val translatedMesh = mesh.transform((pt: Point[_3D]) => pt + EuclideanVector(translationLength, 0.0, 0.0))
 
@@ -128,7 +128,7 @@ class tetrahedralMeshMetricsTests extends ScalismoTestSuite {
 
     it("should be (slightly) lower than the average translation applied to each vertex") {
       MeshMetrics.avgDistance(mesh, translatedMesh) should be < translationLength.toDouble
-      MeshMetrics.avgDistance(mesh, translatedMesh) should be(translationLength.toDouble +- (translationLength * 0.71))
+      MeshMetrics.avgDistance(mesh, translatedMesh) should be(translationLength.toDouble +- (translationLength * 0.3))
     }
   }
 
@@ -139,7 +139,7 @@ class tetrahedralMeshMetricsTests extends ScalismoTestSuite {
 
     it("returns the max distance") {
       // create a mesh where the point on the nose is displaced by a value of 1
-      val newMesh = mesh.transform((pt: Point[_3D]) => if (mesh.pointSet.findClosestPoint(pt).id == PointId(84)) pt + EuclideanVector(0, 0, 1) else pt)
+      val newMesh = mesh.transform((pt: Point[_3D]) => if (mesh.pointSet.findClosestPoint(pt).id == PointId(30)) pt + EuclideanVector(0, 0, 1) else pt)
       MeshMetrics.hausdorffDistance(mesh, newMesh) should be(1)
     }
 
@@ -147,31 +147,31 @@ class tetrahedralMeshMetricsTests extends ScalismoTestSuite {
       MeshMetrics.hausdorffDistance(mesh, translatedMesh) should be(MeshMetrics.hausdorffDistance(translatedMesh, mesh))
     }
   }
-//
-//  describe("the dice coefficient") {
-//    val path = getClass.getResource("/tetramesh.vtk").getPath
-//    val spheremesh = TetraMeshIO.readTetrahedralMesh(new File(URLDecoder.decode(path))).get
-//
-//    it("computes the right value for a unit sphere that completely overlaps itself") {
-//      MeshMetrics.diceCoefficient(spheremesh, spheremesh) should be(1)
-//    }
-//
-//    it("computes the right value for a unit sphere that is shrunk by 0.5 ") {
-//      val spheretetrameshScaled = spheremesh.transform(pt => (pt.toVector * 0.5).toPoint)
-//      val smallSphereVolume = 0.5 * 0.5 * 0.5 * 4.0 / 3.0 * math.Pi
-//      val unitSphereVolume = 4.0 / 3.0 * math.Pi
-//      val intersectionVolume = smallSphereVolume
-//      val dc = 2.0 * intersectionVolume / (smallSphereVolume + unitSphereVolume)
-//      MeshMetrics.diceCoefficient(spheremesh, spheretetrameshScaled) should be(dc +- 1e-1)
-//
-//    }
-//
-//    it("yields 0 if the volumes don't overlap") {
-//      val spheremeshTranslated = spheremesh.transform(pt => pt + EuclideanVector(10, 0, 0))
-//      MeshMetrics.diceCoefficient(spheremesh, spheremeshTranslated) should be(0.0)
-//    }
-//
-//  }
+
+  describe("the dice coefficient") {
+    val path = getClass.getResource("/unit-sphere.grid.inp").getPath
+    val spheremesh = MeshIO.readTetrahedralMesh(new File(URLDecoder.decode(path))).get
+
+    it("computes the right value for a unit sphere that completely overlaps itself") {
+      MeshMetrics.diceCoefficient(spheremesh, spheremesh) should be(1)
+    }
+
+    it("computes the right value for a unit sphere that is shrunk by 0.5 ") {
+      val spheretetrameshScaled = spheremesh.transform(pt => (pt.toVector * 0.5).toPoint)
+      val smallSphereVolume = 0.5 * 0.5 * 0.5 * 4.0 / 3.0 * math.Pi
+      val unitSphereVolume = 4.0 / 3.0 * math.Pi
+      val intersectionVolume = smallSphereVolume
+      val dc = 2.0 * intersectionVolume / (smallSphereVolume + unitSphereVolume)
+      MeshMetrics.diceCoefficient(spheremesh, spheretetrameshScaled) should be(dc +- 1e-1)
+
+    }
+
+    it("yields 0 if the volumes don't overlap") {
+      val spheremeshTranslated = spheremesh.transform(pt => pt + EuclideanVector(10, 0, 0))
+      MeshMetrics.diceCoefficient(spheremesh, spheremeshTranslated) should be(0.0)
+    }
+
+  }
 
 }
 
