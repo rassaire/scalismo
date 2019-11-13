@@ -1,5 +1,6 @@
 package scalismo.mesh
 import java.io.File
+import java.net.URLDecoder
 
 import breeze.linalg.DenseVector
 import scalismo.ScalismoTestSuite
@@ -18,7 +19,7 @@ class TetrahedralMeshtests extends ScalismoTestSuite {
 
 
   val path = getClass.getResource("/tetraMesh.vtk").getPath
-  val tetraMesh = TetraMeshIO.readTetrahedralMesh(new File(path)).get
+  val tetraMesh = TetraMeshIO.readTetrahedralMesh(new File(URLDecoder.decode(path))).get
 
   it("finds the right closest points for all the points that define the tetrahedral mesh") {
 
